@@ -55,6 +55,10 @@ export interface IEnvListProps {
    * Environment remove handler
    */
   onRemove(): void;
+  /**
+   * Environment solve handler
+   */
+  onSolve(): void;
 }
 
 /**
@@ -92,6 +96,7 @@ export const CondaEnvList: React.FunctionComponent<IEnvListProps> = (
         onExport={props.onExport}
         onRefresh={props.onRefresh}
         onRemove={props.onRemove}
+        onSolve={props.onSolve}
       />
       <div
         id={CONDA_ENVIRONMENT_PANEL_ID}

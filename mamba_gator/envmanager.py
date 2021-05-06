@@ -395,15 +395,19 @@ class EnvManager:
         Returns:
             Dict[str, str]: Create command output
         """
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=file_name) as f:
+        regex = re.compile('^@EXPLICIT$', re.MULTILINE)
+        is_explicit_list = regex.search(file_content)
+
+        env_argument = [] if is_explicit_list else ["env"]
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=file_name) as f:
             name = f.name
             f.write(file_content)
+            f.flush()
 
-        ans = await self._execute(
-            self.manager, "env", "create", "-q", "--json", "-n", env, "--file", name
-        )
-        # Remove temporary file
-        os.unlink(name)
+            ans = await self._execute(
+                self.manager, *env_argument, "create", "-q", "--json", "-n", env, "--file", name
+            )
 
         rcode, output = ans
         if rcode > 0:
@@ -995,3 +999,13 @@ class EnvManager:
         )
         _, output = ans
         return self._clean_conda_json(output)
+
+    async def get_subdir(self):
+        rcode, output = await self._execute(
+            self.manager, "list", "--explicit"
+        )
+        if rcode == 0:
+            regex = re.compile('^# platform: ([a-z\-0-9]+)$', re.MULTILINE)
+            return {'subdir': regex.findall(output)[0]}
+
+        raise RuntimeError('subdir not found')

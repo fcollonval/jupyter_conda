@@ -6,6 +6,7 @@ import { style } from 'typestyle';
 import { Conda, IEnvironmentManager } from '../tokens';
 import { CondaEnvList, ENVIRONMENT_PANEL_WIDTH } from './CondaEnvList';
 import { CondaPkgPanel } from './CondaPkgPanel';
+import { CondaEnvSolve } from './CondaEnvSolve';
 
 /**
  * Jupyter Conda Component properties
@@ -47,6 +48,13 @@ export interface ICondaEnvState {
   isLoading: boolean;
 }
 
+class NonKeypressStealingDialog<T> extends Dialog<T> {
+  protected onAfterAttach(msg: any) {
+    super.onAfterAttach(msg);
+    this.node.removeEventListener('keydown', this, true);
+  }
+}
+
 /** Top level React component for Jupyter Conda Manager */
 export class NbConda extends React.Component<ICondaEnvProps, ICondaEnvState> {
   constructor(props: ICondaEnvProps) {
@@ -65,6 +73,7 @@ export class NbConda extends React.Component<ICondaEnvProps, ICondaEnvState> {
     this.handleExportEnvironment = this.handleExportEnvironment.bind(this);
     this.handleRefreshEnvironment = this.handleRefreshEnvironment.bind(this);
     this.handleRemoveEnvironment = this.handleRemoveEnvironment.bind(this);
+    this.handleSolveEnvironment = this.handleSolveEnvironment.bind(this);
   }
 
   async handleEnvironmentChange(name: string): Promise<void> {
@@ -355,6 +364,60 @@ export class NbConda extends React.Component<ICondaEnvProps, ICondaEnvState> {
     }
   }
 
+  async handleSolveEnvironment(): Promise<void> {
+    let toastId: React.ReactText;
+    const model = this.props.model;
+    const { subdir } = await model.subdir();
+
+    const create = async (name: string, explicitList: string) => {
+      toastId = await INotification.inProgress(`Creating environment ${name}`);
+      try {
+        await model.import(name, explicitList);
+        INotification.update({
+          toastId,
+          message: `Environment ${name} has been created.`,
+          type: 'success',
+          autoClose: 5000
+        });
+        this.setState({ currentEnvironment: name });
+        this.loadEnvironments();
+      } catch (error) {
+        if (error !== 'cancelled') {
+          console.error(error);
+          if (toastId) {
+            INotification.update({
+              toastId,
+              message: error.message,
+              type: 'error',
+              autoClose: 0
+            });
+          } else {
+            INotification.error(error.message);
+          }
+        } else {
+          if (toastId) {
+            INotification.dismiss(toastId);
+          }
+        }
+        throw error;
+      }
+    };
+    const dialog = new NonKeypressStealingDialog({
+      title: 'Solve Environment',
+      body: (
+        <CondaEnvSolve
+          quetzUrl={model.quetzUrl}
+          quetzSolverUrl={model.quetzSolverUrl}
+          subdir={subdir}
+          create={create}
+        />
+      ),
+      buttons: [Dialog.okButton()]
+    });
+
+    await dialog.launch();
+  }
+
   async loadEnvironments(): Promise<void> {
     if (!this.state.isLoading) {
       this.setState({ isLoading: true });
@@ -402,6 +465,7 @@ export class NbConda extends React.Component<ICondaEnvProps, ICondaEnvState> {
           onExport={this.handleExportEnvironment}
           onRefresh={this.handleRefreshEnvironment}
           onRemove={this.handleRemoveEnvironment}
+          onSolve={this.handleSolveEnvironment}
         />
         <CondaPkgPanel
           height={this.props.height}

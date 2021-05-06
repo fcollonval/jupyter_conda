@@ -45,6 +45,18 @@
       "title": "Only kernel whitelist",
       "description": "Show only environment corresponding to whitelisted kernels",
       "default": false
+    },
+    "quetzUrl": {
+      "type": "string",
+      "title": "Quetz package server",
+      "description": "The Quetz server to use for creating new environments",
+      "default": "http://localhost:8000"
+    },
+    "quetzSolverUrl": {
+      "type": "string",
+      "title": "Quetz solver server",
+      "description": "The Quetz server to use for solving, if this is a different server than 'quetzUrl'",
+      "default": ""
     }
   },
   "additionalProperties": false,

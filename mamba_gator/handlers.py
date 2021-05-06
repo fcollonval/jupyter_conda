@@ -475,6 +475,15 @@ class TaskHandler(EnvBaseHandler):
             self.finish()
 
 
+class SubdirHandler(EnvBaseHandler):
+    @tornado.web.authenticated
+    async def get(self):
+        """`GET /subdir` Get the conda-subdir.
+        """
+        idx = self._stack.put(self.env_manager.get_subdir)
+
+        self.redirect_to_task(idx)
+
 # -----------------------------------------------------------------------------
 # URL to handler mappings
 # -----------------------------------------------------------------------------
@@ -488,6 +497,7 @@ default_handlers = [
     (r"/channels", ChannelsHandler),
     (r"/environments", EnvironmentsHandler),  # GET / POST
     (r"/environments/%s" % _env_regex, EnvironmentHandler),  # GET / PATCH / DELETE
+    (r"/subdir", SubdirHandler),  # GET
     # PATCH / POST / DELETE
     (r"/environments/%s/packages" % _env_regex, PackagesEnvironmentHandler),
     (r"/packages", PackagesHandler),  # GET

@@ -4,8 +4,9 @@
     "outDir": "lib",
     "rootDir": "src",
     "sourceRoot": "./@mamba-org/gator-common/src",
-    "types": ["jest"]
+    "types": ["jest"],
+    "allowJs": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js"],
   "exclude": ["src/**/*.spec.*"]
 }

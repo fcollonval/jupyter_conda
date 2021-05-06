@@ -63,3 +63,7 @@
 button.jp-button-hide {
   display: none;
 }
+
+body > ul.CodeMirror-hints {
+  z-index: 10001;
+}

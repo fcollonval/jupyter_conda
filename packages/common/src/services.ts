@@ -1,4 +1,4 @@
-import { URLExt } from '@jupyterlab/coreutils';
+import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { JSONObject, PromiseDelegate } from '@lumino/coreutils';
@@ -139,6 +139,20 @@ export class CondaEnvironments implements IEnvironmentManager {
   }
 
   /**
+   * Get the Quetz URL
+   */
+  get quetzUrl(): string {
+    return this._quetzUrl;
+  }
+
+  /**
+   * Get the Quetz solver URL
+   */
+  get quetzSolverUrl(): string {
+    return this._quetzSolverUrl;
+  }
+
+  /**
    * Load user settings
    *
    * @param settings User settings
@@ -147,6 +161,8 @@ export class CondaEnvironments implements IEnvironmentManager {
     this._environmentTypes = settings.get('types').composite as IType;
     this._fromHistory = settings.get('fromHistory').composite as boolean;
     this._whitelist = settings.get('whitelist').composite as boolean;
+    this._quetzUrl = settings.get('quetzUrl').composite as string;
+    this._quetzSolverUrl = settings.get('quetzSolverUrl').composite as string;
   }
 
   /**
@@ -398,6 +414,19 @@ export class CondaEnvironments implements IEnvironmentManager {
     }
   }
 
+  async subdir(): Promise<{ subdir: string }> {
+    const { promise } = Private.requestServer(
+      URLExt.join('conda', 'subdir'),
+      {}
+    );
+    const response = await promise;
+    if (response.ok) {
+      return response.json();
+    } else {
+      throw new Error('Error getting subdir');
+    }
+  }
+
   // Resolve promise to disconnect signals at disposal
   private _clean: () => void = () => {
     return;
@@ -409,13 +438,19 @@ export class CondaEnvironments implements IEnvironmentManager {
   >(this);
   private _environments: Array<Conda.IEnvironment>;
   private _environmentsTimer = -1;
-  private _environmentTypes: IType = {
+  private _environmentTypes: IType = (PageConfig.getOption('types') &&
+    JSON.parse(PageConfig.getOption('types'))) || {
     python3: ['python=3', 'ipykernel'],
     r: ['r-base', 'r-essentials']
   };
-  private _fromHistory = false;
+  private _fromHistory =
+    PageConfig.getOption('fromHistory').toLowerCase() === 'true';
   private _packageManager = new CondaPackage();
-  private _whitelist = false;
+  private _whitelist =
+    PageConfig.getOption('whitelist').toLowerCase() === 'true';
+  private _quetzUrl =
+    PageConfig.getOption('quetzUrl') || 'http://localhost:8000';
+  private _quetzSolverUrl = PageConfig.getOption('quetzSolverUrl');
 }
 
 export class CondaPackage implements Conda.IPackageManager {

@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "incremental": true,
     "inlineSources": true,
-    "lib": ["dom", "es6"],
+    "lib": ["dom", "es2020"],
     "jsx": "react",
     "module": "commonjs",
     "moduleResolution": "node",
